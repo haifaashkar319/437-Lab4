@@ -1,10 +1,7 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace LibraryManagement.ViewModels;
 
 public class AuthorCreateViewModel
 {
-    [Required(ErrorMessage = "Name is required")]
-    [MinLength(3, ErrorMessage = "Name must be at least 3 characters long")]
+    // Removed DataAnnotations; validation is handled in the Application layer (FluentValidation)
     public string Name { get; set; } = string.Empty;
 }

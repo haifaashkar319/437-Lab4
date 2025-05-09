@@ -81,16 +81,12 @@ namespace LibraryManagement.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, string name)
+        public async Task<IActionResult> Edit(AuthorEditViewModel model)
         {
-            if (string.IsNullOrWhiteSpace(name))
-            {
-                ModelState.AddModelError("Name", "Name is required");
-                var author = await _mediator.Send(new GetAuthorByIdQuery(id));
-                return View(author);
-            }
+            if (!ModelState.IsValid)
+                return View(model);
 
-            var command = new UpdateAuthorCommand(id, name);
+            var command = new UpdateAuthorCommand(model.AuthorId, model.Name);
             var result = await _mediator.Send(command);
             if (!result) return NotFound();
 
