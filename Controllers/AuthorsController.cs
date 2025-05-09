@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using Core.Domain.Entities;
 using Application.Authors.Queries;
 using Application.Authors.Commands;
 using LibraryManagement.ViewModels;
@@ -20,7 +19,15 @@ namespace LibraryManagement.Controllers
         public async Task<IActionResult> Index(string? searchString)
         {
             var authors = await _mediator.Send(new GetAuthorsQuery(searchString));
-            return View(authors);
+
+            // Map domain entities to view models
+            var viewModels = authors.Select(a => new AuthorListViewModel
+            {
+                AuthorId = a.AuthorId,
+                Name = a.Name.Value
+            }).ToList();
+
+            return View(viewModels);
         }
 
         [HttpGet]
@@ -29,7 +36,13 @@ namespace LibraryManagement.Controllers
             var author = await _mediator.Send(new GetAuthorByIdQuery(id));
             if (author == null) return NotFound();
 
-            return View(author);
+            var viewModel = new AuthorDetailViewModel
+            {
+                AuthorId = author.AuthorId,
+                Name = author.Name.Value // mapping AuthorName to string
+            };
+
+            return View(viewModel);
         }
 
         [HttpGet]
@@ -57,7 +70,13 @@ namespace LibraryManagement.Controllers
             var author = await _mediator.Send(new GetAuthorByIdQuery(id));
             if (author == null) return NotFound();
 
-            return View(author);
+            var viewModel = new AuthorEditViewModel
+            {
+                AuthorId = author.AuthorId,
+                Name = author.Name.Value // mapping AuthorName to string
+            };
+
+            return View(viewModel);
         }
 
         [HttpPost]
@@ -84,7 +103,13 @@ namespace LibraryManagement.Controllers
             var author = await _mediator.Send(new GetAuthorByIdQuery(id));
             if (author == null) return NotFound();
 
-            return View(author);
+            var viewModel = new AuthorDeleteViewModel
+            {
+                AuthorId = author.AuthorId,
+                Name = author.Name.Value // mapping AuthorName to string
+            };
+
+            return View(viewModel);
         }
 
         [HttpPost, ActionName("Delete")]

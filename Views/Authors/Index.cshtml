@@ -1,11 +1,11 @@
-@model IEnumerable<Core.Domain.Entities.Author>
+@using LibraryManagement.ViewModels
+@model IEnumerable<AuthorListViewModel>
 
 @{
     ViewData["Title"] = "Authors";
 }
 
 <h2>Authors</h2>
-
 
 <p>
     <a asp-action="Create" class="btn btn-success mb-3">Create New Author</a>
@@ -19,7 +19,7 @@
 <table class="table table-striped table-hover">
     <thead class="table-dark">
         <tr>
-            <th>@Html.DisplayNameFor(model => model.Name.Value)</th>
+            <th>@Html.DisplayNameFor(modelItem => modelItem.Name)</th>
             <th>Actions</th>
         </tr>
     </thead>
@@ -27,7 +27,7 @@
         @foreach (var item in Model)
         {
             <tr>
-                <td>@Html.DisplayFor(modelItem => item.Name.Value)</td>
+                <td>@Html.DisplayFor(modelItem => item.Name)</td>
                 <td>
                     <a asp-action="Edit" asp-route-id="@item.AuthorId" class="btn btn-warning btn-sm">Edit</a>
                     <a asp-action="Details" asp-route-id="@item.AuthorId" class="btn btn-info btn-sm">Details</a>
