@@ -2,16 +2,16 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using MediatR;
-using Core.Domain.Entities;
-using Application.Books.Commands;
 using Infrastructure.Persistence;
+using LibraryManagement.ViewModels;
+using Application.Books.Commands;
 
 namespace LibraryManagement.Controllers
 {
     public class BooksController : Controller
     {
         private readonly IMediator _mediator;
-        private readonly CleanLibraryContext _context;  // Updated type
+        private readonly CleanLibraryContext _context;
 
         public BooksController(IMediator mediator, CleanLibraryContext context)
         {
@@ -19,123 +19,150 @@ namespace LibraryManagement.Controllers
             _context = context;
         }
 
-        // TODO: Migrate to GetBooksQuery
         public async Task<IActionResult> Index(string searchString)
         {
-            var books = from b in _context.Books.Include(b => b.Author)
-                        select b;
+            var books = _context.Books.Include(b => b.Author).AsQueryable();
 
             if (!string.IsNullOrEmpty(searchString))
             {
-                books = books.Where(b => b.Title.Value.ToLower().Contains(searchString) || b.Author.Name.Value.ToLower().Contains(searchString));
+                books = books.Where(b =>
+                    b.Title.Value.ToLower().Contains(searchString.ToLower()) ||
+                    b.Author.Name.Value.ToLower().Contains(searchString.ToLower()));
             }
 
-            return View(await books.ToListAsync());
+            var viewModels = await books
+                .Select(b => new BookListViewModel
+                {
+                    BookId = b.BookId,
+                    Title = b.Title.Value,
+                    Genre = b.Genre.Value,
+                    AuthorName = b.Author.Name.Value
+                })
+                .ToListAsync();
+
+            return View(viewModels);
         }
 
-        // TODO: Migrate to GetBookByIdQuery
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int id)
         {
-            if (id == null) return NotFound();
-
             var book = await _context.Books
                 .Include(b => b.Author)
-                .FirstOrDefaultAsync(m => m.BookId == id);
+                .FirstOrDefaultAsync(b => b.BookId == id);
+
             if (book == null) return NotFound();
 
-            return View(book);
+            var viewModel = new BookDetailViewModel
+            {
+                BookId = book.BookId,
+                Title = book.Title.Value,
+                Genre = book.Genre.Value,
+                AuthorName = book.Author.Name.Value
+            };
+
+            return View(viewModel);
         }
 
-        // Using hybrid approach - MediatR for Create, context for dropdown
-        public IActionResult Create()
+        [HttpGet]
+        public async Task<IActionResult> Create()
         {
-            ViewData["AuthorId"] = new SelectList(_context.Authors, "AuthorId", "Name");
-            return View();
+            var authors = await _context.Authors.ToListAsync();
+
+            var viewModel = new BookCreateViewModel
+            {
+                Authors = authors.Select(a => new SelectListItem
+                {
+                    Value = a.AuthorId.ToString(),
+                    Text = a.Name.Value
+                })
+            };
+
+            return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Title,AuthorId,Genre")] Book book)
+        public async Task<IActionResult> Create(BookCreateViewModel model)
         {
-            if (ModelState.IsValid)
-            {
-                var command = new CreateBookCommand(book.Title.Value, book.Genre.Value, book.AuthorId);
-                await _mediator.Send(command);
-                return RedirectToAction(nameof(Index));
-            }
-
-            ViewData["AuthorId"] = new SelectList(_context.Authors, "AuthorId", "Name", book.AuthorId);
-            return View(book);
-        }
-
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null) return NotFound();
-
-            var book = await _context.Books.FindAsync(id);
-            if (book == null) return NotFound();
-
-            ViewData["AuthorId"] = new SelectList(_context.Authors, "AuthorId", "Name", book.AuthorId);
-            return View(book);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("BookId,Title,AuthorId,Genre")] Book book)
-        {
-            if (id != book.BookId)
-            {
-                Console.WriteLine("Book ID mismatch!");
-                return NotFound();
-            }
-
             if (!ModelState.IsValid)
             {
-                Console.WriteLine("ModelState is invalid!");
-                foreach (var error in ModelState.Values.SelectMany(v => v.Errors))
+                model.Authors = _context.Authors.Select(a => new SelectListItem
                 {
-                    Console.WriteLine($"Error: {error.ErrorMessage}");
-                }
-                ViewData["AuthorId"] = new SelectList(_context.Authors, "AuthorId", "Name", book.AuthorId);
-                return View(book);
+                    Value = a.AuthorId.ToString(),
+                    Text = a.Name.Value
+                });
+                return View(model);
             }
 
-            try
-            {
-                Console.WriteLine($"Updating Book: ID={book.BookId}, Title={book.Title}, Genre={book.Genre}, Author={book.AuthorId}");
-
-                _context.Attach(book);
-                _context.Entry(book).State = EntityState.Modified; // Ensure EF Core tracks changes
-
-                await _context.SaveChangesAsync();
-                Console.WriteLine("Book updated successfully!");
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BookExists(book.BookId))
-                {
-                    Console.WriteLine("Book no longer exists!");
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            var command = new CreateBookCommand(model.Title, model.Genre, model.AuthorId);
+            await _mediator.Send(command);
 
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Delete(int? id)
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null) return NotFound();
-
-            var book = await _context.Books
-                .Include(b => b.Author)
-                .FirstOrDefaultAsync(m => m.BookId == id);
+            var book = await _context.Books.Include(b => b.Author).FirstOrDefaultAsync(b => b.BookId == id);
             if (book == null) return NotFound();
 
-            return View(book);
+            var viewModel = new BookEditViewModel
+            {
+                BookId = book.BookId,
+                Title = book.Title.Value,
+                Genre = book.Genre.Value,
+                AuthorId = book.AuthorId,
+                Authors = _context.Authors.Select(a => new SelectListItem
+                {
+                    Value = a.AuthorId.ToString(),
+                    Text = a.Name.Value
+                })
+            };
+
+            return View(viewModel);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(BookEditViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                model.Authors = _context.Authors.Select(a => new SelectListItem
+                {
+                    Value = a.AuthorId.ToString(),
+                    Text = a.Name.Value
+                });
+                return View(model);
+            }
+
+            var book = await _context.Books.FindAsync(model.BookId);
+            if (book == null) return NotFound();
+
+            book.Title = new Core.Domain.ValueObjects.Title(model.Title);
+            book.Genre = new Core.Domain.ValueObjects.Genre(model.Genre);
+            book.AuthorId = model.AuthorId;
+
+            _context.Books.Update(book);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var book = await _context.Books.Include(b => b.Author).FirstOrDefaultAsync(b => b.BookId == id);
+            if (book == null) return NotFound();
+
+            var viewModel = new BookDeleteViewModel
+            {
+                BookId = book.BookId,
+                Title = book.Title.Value,
+                Genre = book.Genre.Value,
+                AuthorName = book.Author.Name.Value
+            };
+
+            return View(viewModel);
         }
 
         [HttpPost, ActionName("Delete")]
@@ -147,14 +174,8 @@ namespace LibraryManagement.Controllers
             {
                 _context.Books.Remove(book);
                 await _context.SaveChangesAsync();
-                Console.WriteLine($"Book with ID {id} deleted successfully.");
             }
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool BookExists(int id)
-        {
-            return _context.Books.Any(e => e.BookId == id);
         }
     }
 }
