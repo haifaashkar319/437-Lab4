@@ -1,0 +1,39 @@
+@model IEnumerable<LibraryManagementService.Models.Borrower>
+
+@{
+    ViewData["Title"] = "Borrowers";
+}
+
+<h2>Borrowers</h2>
+
+<p>
+    <a asp-action="Create" class="btn btn-success mb-3">Create New Borrower</a>
+</p>
+<form method="get" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="searchString" class="form-control" placeholder="Search borrowers by name..." value="@Context.Request.Query["searchString"]">
+        <button type="submit" class="btn btn-primary">Search</button>
+    </div>
+</form>
+
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>@Html.DisplayNameFor(model => model.Name)</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@Html.DisplayFor(modelItem => item.Name)</td>
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.BorrowerId" class="btn btn-warning btn-sm">Edit</a>
+                    <a asp-action="Details" asp-route-id="@item.BorrowerId" class="btn btn-info btn-sm">Details</a>
+                    <a asp-action="Delete" asp-route-id="@item.BorrowerId" class="btn btn-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

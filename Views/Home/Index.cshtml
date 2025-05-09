@@ -1,0 +1,77 @@
+﻿@{
+    ViewData["Title"] = "Welcome to the Online Library";
+}
+
+<style>
+    /* Background Styling */
+    .hero-section {
+        background: url('https://source.unsplash.com/1600x900/?library,books') center/cover no-repeat;
+        height: 70vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    .hero-overlay {
+        background: rgba(0, 0, 0, 0.5);
+        padding: 50px;
+        border-radius: 15px;
+    }
+
+    /* Welcome Text */
+    .welcome-text {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    /* Buttons */
+    .btn-custom {
+        margin-top: 15px;
+        padding: 10px 20px;
+        font-size: 1.2rem;
+        border-radius: 8px;
+    }
+</style>
+
+<div class="hero-section">
+    <div class="hero-overlay text-center">
+        <h1 class="welcome-text">📚 Welcome to Our Online Library 📖</h1>
+        <p class="lead">Explore, Borrow, and Manage Books with Ease!</p>
+        <a asp-controller="Books" asp-action="Index" class="btn btn-light btn-lg btn-custom">Browse Books</a>
+        <a asp-controller="Borrower" asp-action="Index" class="btn btn-primary btn-lg btn-custom">View Borrowers</a>
+    </div>
+</div>
+
+<div class="container mt-5 text-center">
+    <h2>📙 Discover a World of Knowledge</h2>
+    <p>We provide a seamless experience for book lovers and borrowers alike. Our system allows you to manage books, track loans, and explore new reads effortlessly.</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">📚 Extensive Collection</h5>
+                    <p class="card-text">Find books from various genres and authors.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">🔄 Easy Borrowing</h5>
+                    <p class="card-text">Loan and return books effortlessly with our system.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">💡 Smart Management</h5>
+                    <p class="card-text">Track borrowers, due dates, and loan history seamlessly.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,194 @@
+@baseUrl = http://localhost:5087
+@token   =   eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImM3NGJlMmFlLTJlOWQtNGFmZC05Njk0LTc3ODliMTU3MDlkYSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJoc2E1MyIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6IkhhaWZhQGdtYWlsLmNvbSIsImV4cCI6MTc0NTA4NjU3OCwiaXNzIjoiTGlicmFyeUFwaSIsImF1ZCI6IkxpYnJhcnlBcGlVc2VycyJ9.5kVVR-cIJeovAPD2gVju8thFpGpjY4Dj9K8xgk4avy0
+
+###############################################################################
+### 1. AUTHENTICATION FLOW 
+###############################################################################
+
+### Register a new user
+POST {{baseUrl}}/api/auth/register
+Content-Type: application/json
+
+{
+  "username":  "hsa53",
+  "email":     "Haifa@gmail.com",
+  "password":  "Haifa123!",
+  "firstName": "Haifa",
+  "lastName":  "Al Ashkar"
+}
+
+### Login to get JWT
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "username": "hsa53",
+  "password": "Haifa123!"
+}
+
+
+### Get current user (& confirm token works)
+GET {{baseUrl}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### Change password
+POST {{baseUrl}}/api/auth/changepassword
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "currentPassword": "Haifa123!",
+  "newPassword":     "Haifa1234!"
+}
+
+### Logout
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{token}}
+
+###############################################################################
+### 2. AUTHORS (CRUD)
+###############################################################################
+
+### List all authors
+GET {{baseUrl}}/api/authors
+Authorization: Bearer {{token}}
+
+### Get one author by ID
+GET {{baseUrl}}/api/authors/1
+Authorization: Bearer {{token}}
+
+### Create a new author
+POST {{baseUrl}}/api/authors
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Brandon Sanderson"
+}
+
+### Update an existing author
+PUT {{baseUrl}}/api/authors/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "authorId": 1,
+  "name":     "J. K. Rowling"
+}
+
+### Delete an author
+DELETE {{baseUrl}}/api/authors/15
+Authorization: Bearer {{token}}
+
+###############################################################################
+### 3. BOOKS (CRUD + filtering)
+###############################################################################
+
+### List all books (optionally filter with `?searchString=<term>`)
+GET {{baseUrl}}/api/books?searchString=harry
+Authorization: Bearer {{token}}
+
+### Get one book by ID
+GET {{baseUrl}}/api/books/1
+Authorization: Bearer {{token}}
+
+### Create a new book
+POST {{baseUrl}}/api/books
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title":    "Reminders Of Him",
+  "authorId": 3,
+  "genre":    "Drama"
+}
+
+### Update an existing book
+PUT {{baseUrl}}/api/books/2
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "bookId":   2,
+  "title":    "Harry Potter and the Chamber of Secrets",
+  "authorId": 1,
+  "genre":    "Fantasy"
+}
+
+### Delete a book
+DELETE {{baseUrl}}/api/books/1
+Authorization: Bearer {{token}}
+
+###############################################################################
+### 4. BORROWERS (CRUD)
+###############################################################################
+
+### List all borrowers
+GET {{baseUrl}}/api/borrower
+Authorization: Bearer {{token}}
+
+### Get one borrower by ID (with loan history)
+GET {{baseUrl}}/api/borrower/1
+Authorization: Bearer {{token}}
+
+### Create a borrower
+POST {{baseUrl}}/api/borrower
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "John Doe"
+}
+
+### Update a borrower
+PUT {{baseUrl}}/api/borrower/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "borrowerId": 1,
+  "name":       "John Doe"
+}
+
+### Delete a borrower
+DELETE {{baseUrl}}/api/borrower/1
+Authorization: Bearer {{token}}
+
+###############################################################################
+### 5. LOANS (CRUD + filtering)
+###############################################################################
+
+### List all loans (filter by book title or borrower name)
+GET {{baseUrl}}/api/loan?searchString=alice
+Authorization: Bearer {{token}}
+
+### Get one loan by ID
+GET {{baseUrl}}/api/loan/1
+Authorization: Bearer {{token}}
+
+### Create a loan
+POST {{baseUrl}}/api/loan
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "bookId":     1,
+  "borrowerId": 1,
+  "loanDate":   "2025-04-19T00:00:00"
+}
+
+### Update a loan
+PUT {{baseUrl}}/api/loan/1
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "loanId":     1,
+  "bookId":     2,
+  "borrowerId": 1,
+  "loanDate":   "2025-04-20T00:00:00"
+}
+
+### Delete a loan
+DELETE {{baseUrl}}/api/loan/1
+Authorization: Bearer {{token}}

@@ -1,0 +1,52 @@
+Program.cs::
+Purpose: Configures the application at startup, including services and the middleware pipeline.
+Modifications:
+Added Entity Framework Core services to use SQLite as the database provider.
+Included automatic database creation logic (EnsureCreated()) to initialize the database schema when the application starts.
+
+
+
+appsettings.json::
+Purpose: Stores configuration data such as connection strings and application settings.
+Modifications:
+Added a connection string for the SQLite database to specify the path and name of the database file.
+
+
+LibraryContext.cs::
+Purpose: Acts as the main class that coordinates Entity Framework functionality for the models.
+Modifications:
+Configured the DB context to link with the SQLite database using the connection string from appsettings.json.
+Defined DbSet properties for each model to represent tables in the database.
+
+
+
+
+
+We've integrated Entity Framework Core to manage our SQLite database effectively. Here are the packages you need to install to get up to speed:
+
+Microsoft.EntityFrameworkCore - Core library for using EF Core.
+bash
+Copy
+dotnet add package Microsoft.EntityFrameworkCore
+Microsoft.EntityFrameworkCore.Sqlite - Allows EF Core to work with SQLite.
+bash
+Copy
+dotnet add package Microsoft.EntityFrameworkCore.Sqlite
+Microsoft.EntityFrameworkCore.Design - Required for design-time functionalities such as migrations.
+bash
+Copy
+dotnet add package Microsoft.EntityFrameworkCore.Design
+Please run these commands in your terminal within the project directory to ensure that you have all the necessary tools for database operations.
+
+DB Browser for SQLite:
+To facilitate direct database interaction, I've started using DB Browser for SQLite. It's a visual tool that allows us to view, query, and manage our SQLite databases more conveniently.
+
+Installation:
+
+Download it from DB Browser for SQLite.
+Follow the provided installation instructions.
+Usage:
+
+Open DB Browser and click on 'Open Database'.
+Navigate to our project directory and open the LibraryManagement.db file.
+You can use this tool to browse data, view the database structure, and run SQL queries directly.
