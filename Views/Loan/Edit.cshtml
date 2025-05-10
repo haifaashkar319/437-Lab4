@@ -11,12 +11,12 @@
     <input type="hidden" asp-for="LoanId" />
 
     <div class="form-group">
-        <label asp-for="BookId"></label>
+        <label asp-for="BookId">Book</label>
         <select asp-for="BookId" class="form-control" asp-items="Model.Books"></select>
     </div>
 
     <div class="form-group">
-        <label asp-for="BorrowerId"></label>
+        <label asp-for="BorrowerId">Borrower</label>
         <select asp-for="BorrowerId" class="form-control" asp-items="Model.Borrowers"></select>
     </div>
 

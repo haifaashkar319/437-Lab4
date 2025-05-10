@@ -9,6 +9,11 @@ public class LoanRepository : ILoanRepository
 {
     private readonly CleanLibraryContext _context;
 
+    public async Task<IEnumerable<Loan>> GetAllAsync()
+    {
+        return await _context.Loans.ToListAsync();
+    }
+
     public LoanRepository(CleanLibraryContext context)
     {
         _context = context;
