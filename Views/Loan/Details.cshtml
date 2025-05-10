@@ -4,25 +4,33 @@
     ViewData["Title"] = "Loan Details";
 }
 
-<h1>Loan Details</h1>
-<hr />
-<div>
-    <dl class="row">
-        <dt class="col-sm-2">Book</dt>
-        <dd class="col-sm-10">@Model.BookTitle</dd>
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">@ViewData["Title"]</h4>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-4">
+                        <dt class="col-sm-3">Book</dt>
+                        <dd class="col-sm-9">@Model.BookTitle</dd>
 
-        <dt class="col-sm-2">Borrower</dt>
-        <dd class="col-sm-10">@Model.BorrowerName</dd>
+                        <dt class="col-sm-3">Borrower</dt>
+                        <dd class="col-sm-9">@Model.BorrowerName</dd>
 
-        <dt class="col-sm-2">Loan Date</dt>
-        <dd class="col-sm-10">@Model.LoanDate.ToShortDateString()</dd>
+                        <dt class="col-sm-3">Loan Date</dt>
+                        <dd class="col-sm-9">@Model.LoanDate.ToShortDateString()</dd>
 
-        <dt class="col-sm-2">Due Date</dt>
-        <dd class="col-sm-10">@Model.DueDate.ToShortDateString()</dd>
-    </dl>
-</div>
-
-<div>
-    <a asp-action="Edit" asp-route-id="@Model.LoanId" class="btn btn-warning">Edit</a>
-    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+                        <dt class="col-sm-3">Due Date</dt>
+                        <dd class="col-sm-9">@Model.DueDate.ToShortDateString()</dd>
+                    </dl>
+                    <div class="d-flex">
+                        <a asp-action="Edit" asp-route-id="@Model.LoanId" class="btn btn-warning">Edit</a>
+                        <a asp-action="Index" class="btn btn-outline-secondary ms-2">Back to List</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
