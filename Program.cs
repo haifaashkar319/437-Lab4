@@ -90,27 +90,42 @@ builder.Services.AddScoped<IBorrowerRepository, BorrowerRepository>();
 builder.Services.AddScoped<ILoanRepository, LoanRepository>();
 
 var app = builder.Build();
-
-// Seed
+//— 1) seed roles --------------------------------------
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<LibraryContext>();
-    db.Database.EnsureCreated();
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var rolesToSeed = new[] { "Admin" /*, "User", "Manager", etc.*/ };
+
+    foreach (var roleName in rolesToSeed)
+    {
+        // .GetAwaiter().GetResult() is just for a quick sync‐block;
+        // in production you’d want a truly async seed.
+        if (!roleManager.RoleExistsAsync(roleName).GetAwaiter().GetResult())
+        {
+            roleManager.CreateAsync(new IdentityRole(roleName))
+                       .GetAwaiter()
+                       .GetResult();
+        }
+    }
+}
+//— end seeding -----------------------------------------
+
+// seed your app‐specific data (if any)
+using (var scope = app.Services.CreateScope())
+{
+    var ctx = scope.ServiceProvider.GetRequiredService<LibraryContext>();
+    ctx.Database.EnsureCreated();
 }
 
-// Middleware
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
-}
+// … the rest of your middleware pipeline …
 app.UseHttpsRedirection();
 app.UseStaticFiles();
+app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Routes: default to Auth/Login
+app.MapControllers();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}");
