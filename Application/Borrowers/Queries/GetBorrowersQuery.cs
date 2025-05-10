@@ -1,15 +1,12 @@
-using Core.Domain.Entities;
+using Application.Borrowers.DTOs;
 using MediatR;
 using System.Collections.Generic;
 
-namespace Application.Borrowers.Queries;
-
-public class GetBorrowersQuery : IRequest<IEnumerable<Borrower>>
+namespace Application.Borrowers.Queries
 {
-    public string? Search { get; set; }
-
-    public GetBorrowersQuery(string? search = null)
+    public class GetBorrowersQuery : IRequest<IEnumerable<BorrowerDto>>
     {
-        Search = search;
+        public string? Search { get; set; }
+        public GetBorrowersQuery(string? search = null) => Search = search;
     }
 }

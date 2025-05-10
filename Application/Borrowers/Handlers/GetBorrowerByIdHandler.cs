@@ -1,21 +1,30 @@
-using Core.Domain.Entities;
 using Core.Domain.Interfaces;
 using MediatR;
+using AutoMapper;
+using System.Threading;
+using System.Threading.Tasks;
+using Application.Borrowers.DTOs;
 using Application.Borrowers.Queries;
 
-namespace Application.Borrowers.Handlers;
-
-public class GetBorrowerByIdHandler : IRequestHandler<GetBorrowerByIdQuery, Borrower?>
+namespace Application.Borrowers.Handlers
 {
-    private readonly IBorrowerRepository _repository;
-
-    public GetBorrowerByIdHandler(IBorrowerRepository repository)
+    public class GetBorrowerByIdHandler : IRequestHandler<GetBorrowerByIdQuery, BorrowerDto?>
     {
-        _repository = repository;
-    }
+        private readonly IBorrowerRepository _repository;
+        private readonly IMapper _mapper;
 
-    public async Task<Borrower?> Handle(GetBorrowerByIdQuery request, CancellationToken cancellationToken)
-    {
-        return await _repository.GetByIdAsync(request.Id);
+        public GetBorrowerByIdHandler(IBorrowerRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public async Task<BorrowerDto?> Handle(GetBorrowerByIdQuery request, CancellationToken cancellationToken)
+        {
+            var borrower = await _repository.GetByIdAsync(request.Id);
+            if (borrower == null)
+                return null;
+            return _mapper.Map<BorrowerDto>(borrower);
+        }
     }
 }

@@ -34,6 +34,7 @@ builder.Services
 builder.Services.AddAutoMapper(
     typeof(Application.Mapping.AuthorProfile).Assembly,
     typeof(Application.Mapping.BookProfile).Assembly,
+    typeof(Application.Mapping.BorrowerProfile).Assembly,
     typeof(WebMappingProfile).Assembly
 );
 

@@ -18,13 +18,16 @@ namespace LibraryManagement.Controllers
         [HttpGet]
         public async Task<IActionResult> Index(string? searchString)
         {
+            // now returns IEnumerable<BorrowerDto>
             var borrowers = await _mediator.Send(new GetBorrowersQuery(searchString));
 
-            var viewModels = borrowers.Select(b => new BorrowerListViewModel
-            {
-                BorrowerId = b.BorrowerId,
-                Name = b.Name.Value
-            }).ToList();
+            // map DTO -> ViewModel, Name is already a string here
+            var viewModels = borrowers
+                .Select(b => new BorrowerListViewModel {
+                    BorrowerId = b.BorrowerId,
+                    Name       = b.Name    // no .Value
+                })
+                .ToList();
 
             return View(viewModels);
         }
@@ -35,10 +38,9 @@ namespace LibraryManagement.Controllers
             var borrower = await _mediator.Send(new GetBorrowerByIdQuery(id));
             if (borrower == null) return NotFound();
 
-            var viewModel = new BorrowerDetailViewModel
-            {
+            var viewModel = new BorrowerDetailViewModel {
                 BorrowerId = borrower.BorrowerId,
-                Name = borrower.Name.Value
+                Name       = borrower.Name    // no .Value
             };
 
             return View(viewModel);
@@ -46,20 +48,15 @@ namespace LibraryManagement.Controllers
 
         [HttpGet]
         public IActionResult Create()
-        {
-            return View(new BorrowerCreateViewModel());
-        }
+            => View(new BorrowerCreateViewModel());
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(BorrowerCreateViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            if (!ModelState.IsValid) return View(model);
 
-            var command = new CreateBorrowerCommand(model.Name);
-            await _mediator.Send(command);
-
+            await _mediator.Send(new CreateBorrowerCommand(model.Name)); // model.Name is string
             return RedirectToAction(nameof(Index));
         }
 
@@ -69,10 +66,9 @@ namespace LibraryManagement.Controllers
             var borrower = await _mediator.Send(new GetBorrowerByIdQuery(id));
             if (borrower == null) return NotFound();
 
-            var viewModel = new BorrowerEditViewModel
-            {
+            var viewModel = new BorrowerEditViewModel {
                 BorrowerId = borrower.BorrowerId,
-                Name = borrower.Name.Value
+                Name       = borrower.Name    // no .Value
             };
 
             return View(viewModel);
@@ -82,11 +78,9 @@ namespace LibraryManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(BorrowerEditViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            if (!ModelState.IsValid) return View(model);
 
-            var command = new UpdateBorrowerCommand(model.BorrowerId, model.Name);
-            var result = await _mediator.Send(command);
+            var result = await _mediator.Send(new UpdateBorrowerCommand(model.BorrowerId, model.Name));
             if (!result) return NotFound();
 
             return RedirectToAction(nameof(Index));
@@ -98,10 +92,9 @@ namespace LibraryManagement.Controllers
             var borrower = await _mediator.Send(new GetBorrowerByIdQuery(id));
             if (borrower == null) return NotFound();
 
-            var viewModel = new BorrowerDeleteViewModel
-            {
+            var viewModel = new BorrowerDeleteViewModel {
                 BorrowerId = borrower.BorrowerId,
-                Name = borrower.Name.Value
+                Name       = borrower.Name    // no .Value
             };
 
             return View(viewModel);
