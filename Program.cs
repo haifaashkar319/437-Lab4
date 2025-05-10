@@ -126,15 +126,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapControllerRoute(
-  name: "welcome",
-  pattern: "welcome",
-  defaults: new { controller = "Home", action = "Index" }
-);
 
-// then the real default:
+
 app.MapControllerRoute(
-  name: "default",
-  pattern: "{controller=Home}/{action=Index}/{id?}"
-);
+    name: "default",
+    pattern: "{controller=Auth}/{action=Login}/{id?}");
+
 app.Run();
