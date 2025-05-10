@@ -1,5 +1,5 @@
 using FluentValidation;
-using LibraryManagement.ViewModels;
+using Presentation.ViewModels;
 
 public class BookCreateViewModelValidator : AbstractValidator<BookCreateViewModel>
 {

@@ -60,8 +60,8 @@ This project is a simple Library Management System built with ASP NET Core MVC (
 
 2. **Clone & Configure**  
    ```bash
-   git clone <your-repo-url>
-   cd LibraryManagement.Web
+   git clone https://github.com/haifaashkar319/437-Lab4.git 
+   cd 437-Lab4
    ```
 
 3. **Connection & JWT Settings**  
@@ -95,10 +95,9 @@ This project is a simple Library Management System built with ASP NET Core MVC (
 
 7. **Run**  
    ```bash
-   cd Web
    dotnet watch run
    ```
-   Browse to: `https://localhost:5001/Auth/Login`
+   Browse to: `http://localhost:5087/`
 
 ---
 
@@ -120,8 +119,8 @@ This project is a simple Library Management System built with ASP NET Core MVC (
 ---
 
 ## 5. High-Level UML Class Diagram  
-PlantUML source included in report; see project docs for rendering instructions.
 
+![image](UML.png)
 ---
 
 ## 6. Key Design Decisions  

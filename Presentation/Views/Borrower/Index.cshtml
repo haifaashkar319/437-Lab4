@@ -1,0 +1,43 @@
+@model IEnumerable<Presentation.ViewModels.BorrowerListViewModel>
+
+@{
+    ViewData["Title"] = "Borrowers";
+}
+
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">@ViewData["Title"]</h4>
+                    <a asp-action="Create" class="btn btn-success">Create New</a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in Model)
+                                {
+                                    <tr>
+                                        <td>@item.Name</td>
+                                        <td>
+                                            <a asp-action="Details" asp-route-id="@item.BorrowerId" class="btn btn-info btn-sm">Details</a>
+                                            <a asp-action="Edit" asp-route-id="@item.BorrowerId" class="btn btn-warning btn-sm ms-1">Edit</a>
+                                            <a asp-action="Delete" asp-route-id="@item.BorrowerId" class="btn btn-danger btn-sm ms-1">Delete</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

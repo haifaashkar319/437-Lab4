@@ -37,10 +37,10 @@ builder.Services.AddAutoMapper(
 
 // 2) MVC + JSON
 builder.Services.AddControllersWithViews()
-    .AddJsonOptions(opts =>
+    .AddRazorOptions(options =>
     {
-        opts.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-        opts.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.ViewLocationFormats.Add("/Presentation/Views/{1}/{0}.cshtml");
+        options.ViewLocationFormats.Add("/Presentation/Views/Shared/{0}.cshtml");
     });
 
 // 3) EF Core DbContexts

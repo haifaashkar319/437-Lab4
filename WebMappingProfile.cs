@@ -4,7 +4,7 @@ using Application.Borrowers.DTOs;
 using Application.Loans.DTOs;
 using AutoMapper;
 using Core.Domain.Entities;
-using LibraryManagement.ViewModels;
+using Presentation.ViewModels;
 
 public class WebMappingProfile : Profile
 {
