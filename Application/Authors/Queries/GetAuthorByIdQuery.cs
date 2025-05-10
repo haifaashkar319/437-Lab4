@@ -1,9 +1,10 @@
 using Core.Domain.Entities;
+using Application.Authors.DTOs;
 using MediatR;
 
 namespace Application.Authors.Queries;
 
-public class GetAuthorByIdQuery : IRequest<Author?>
+public class GetAuthorByIdQuery : IRequest<AuthorDto?>
 {
     public int Id { get; }
 

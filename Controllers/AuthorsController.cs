@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using MediatR;
-using Application.Authors.Queries;
+using AutoMapper;
+using Application.Authors.DTOs;
 using Application.Authors.Commands;
+using Application.Authors.Queries;
 using LibraryManagement.ViewModels;
 
 namespace LibraryManagement.Controllers
@@ -9,25 +11,20 @@ namespace LibraryManagement.Controllers
     public class AuthorsController : Controller
     {
         private readonly IMediator _mediator;
+        private readonly IMapper _mapper;
 
-        public AuthorsController(IMediator mediator)
+        public AuthorsController(IMediator mediator, IMapper mapper)
         {
             _mediator = mediator;
+            _mapper = mapper;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? searchString)
         {
             var authors = await _mediator.Send(new GetAuthorsQuery(searchString));
-
-            // Map domain entities to view models
-            var viewModels = authors.Select(a => new AuthorListViewModel
-            {
-                AuthorId = a.AuthorId,
-                Name = a.Name.Value
-            }).ToList();
-
-            return View(viewModels);
+            var viewModelList = _mapper.Map<List<LibraryManagement.ViewModels.AuthorListViewModel>>(authors);
+            return View(viewModelList);
         }
 
         [HttpGet]
@@ -36,13 +33,8 @@ namespace LibraryManagement.Controllers
             var author = await _mediator.Send(new GetAuthorByIdQuery(id));
             if (author == null) return NotFound();
 
-            var viewModel = new AuthorDetailViewModel
-            {
-                AuthorId = author.AuthorId,
-                Name = author.Name.Value // mapping AuthorName to string
-            };
-
-            return View(viewModel);
+            var dto = _mapper.Map<AuthorDto>(author);
+            return View(dto);
         }
 
         [HttpGet]
@@ -58,7 +50,8 @@ namespace LibraryManagement.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var command = new CreateAuthorCommand(model.Name);
+            var dto = _mapper.Map<CreateAuthorDto>(model);
+            var command = new CreateAuthorCommand(dto.Name);
             await _mediator.Send(command);
 
             return RedirectToAction(nameof(Index));
@@ -70,10 +63,11 @@ namespace LibraryManagement.Controllers
             var author = await _mediator.Send(new GetAuthorByIdQuery(id));
             if (author == null) return NotFound();
 
+            // Map domain entity to view model
             var viewModel = new AuthorEditViewModel
             {
                 AuthorId = author.AuthorId,
-                Name = author.Name.Value // mapping AuthorName to string
+                Name = author.Name
             };
 
             return View(viewModel);
@@ -86,7 +80,8 @@ namespace LibraryManagement.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var command = new UpdateAuthorCommand(model.AuthorId, model.Name);
+            var dto = _mapper.Map<UpdateAuthorDto>(model);
+            var command = new UpdateAuthorCommand(dto.AuthorId, dto.Name);
             var result = await _mediator.Send(command);
             if (!result) return NotFound();
 
@@ -102,7 +97,7 @@ namespace LibraryManagement.Controllers
             var viewModel = new AuthorDeleteViewModel
             {
                 AuthorId = author.AuthorId,
-                Name = author.Name.Value // mapping AuthorName to string
+                Name = author.Name
             };
 
             return View(viewModel);

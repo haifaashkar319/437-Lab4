@@ -17,6 +17,7 @@ using LibraryManagementService.Data;
 using LibraryManagementService.Models;
 using Core.Domain.Interfaces;
 using Infrastructure.Repositories;
+using Application.Mapping; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,13 @@ builder.Services.AddMediatR(cfg =>
 builder.Services
     .AddFluentValidationAutoValidation()
     .AddValidatorsFromAssemblyContaining<CreateBookValidator>();
+
+// Register AutoMapper
+builder.Services.AddAutoMapper(
+    typeof(Application.Mapping.AuthorProfile).Assembly,
+    typeof(WebMappingProfile).Assembly
+);
+builder.Services.AddAutoMapper(typeof(Application.Mapping.AuthorProfile).Assembly);
 
 // MVC + JSON options
 builder.Services.AddControllersWithViews()
