@@ -1,44 +1,39 @@
-@model IEnumerable<LibraryManagementService.Models.Loan>
+@model List<LibraryManagement.ViewModels.LoanListViewModel>
 
 @{
     ViewData["Title"] = "Loans";
 }
 
-<h2>Loans</h2>
-
+<h1>Loans</h1>
 
 <p>
-    <a asp-action="Create" class="btn btn-success mb-3">Create New Loan</a>
+    <a asp-action="Create" class="btn btn-primary">Create New Loan</a>
 </p>
-<form method="get" class="mb-3">
-    <div class="input-group">
-        <input type="text" name="searchString" class="form-control" placeholder="Search by book title or borrower name..." value="@Context.Request.Query["searchString"]">
-        <button type="submit" class="btn btn-primary">Search</button>
-    </div>
-</form>
 
-<table class="table table-striped table-hover">
-    <thead class="table-dark">
+<table class="table table-bordered">
+    <thead>
         <tr>
-            <th>@Html.DisplayNameFor(model => model.LoanDate)</th>
-            <th>Book</th> <!-- Changed from BookId to Book Title -->
-            <th>Borrower</th> <!-- Changed from BorrowerId to Borrower Name -->
-            <th>Actions</th>
+            <th>Book</th>
+            <th>Borrower</th>
+            <th>Loan Date</th>
+            <th>Due Date</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>
-        @foreach (var item in Model)
-        {
-            <tr>
-                <td>@Html.DisplayFor(modelItem => item.LoanDate)</td>
-                <td>@(item.Book != null ? item.Book.Title : "Unknown")</td> <!-- ✅ Show Book Title -->
-                <td>@(item.Borrower != null ? item.Borrower.Name : "Unknown")</td> <!-- ✅ Show Borrower Name -->
-                <td>
-                    <a asp-action="Edit" asp-route-id="@item.LoanId" class="btn btn-warning btn-sm">Edit</a>
-                    <a asp-action="Details" asp-route-id="@item.LoanId" class="btn btn-info btn-sm">Details</a>
-                    <a asp-action="Delete" asp-route-id="@item.LoanId" class="btn btn-danger btn-sm">Delete</a>
-                </td>
-            </tr>
-        }
+    @foreach (var loan in Model)
+    {
+        <tr>
+            <td>@loan.BookTitle</td>
+            <td>@loan.BorrowerName</td>
+            <td>@loan.LoanDate.ToShortDateString()</td>
+            <td>@loan.DueDate.ToShortDateString()</td>
+            <td>
+                <a asp-action="Details" asp-route-id="@loan.LoanId">Details</a> |
+                <a asp-action="Edit" asp-route-id="@loan.LoanId">Edit</a> |
+                <a asp-action="Delete" asp-route-id="@loan.LoanId">Delete</a>
+            </td>
+        </tr>
+    }
     </tbody>
 </table>

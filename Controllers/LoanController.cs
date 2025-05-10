@@ -1,162 +1,189 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using LibraryManagementService.Data;
-using LibraryManagementService.Models;
+using MediatR;
+using Core.Domain.Entities;
+using Infrastructure.Persistence;
+using LibraryManagement.ViewModels;
+using Application.Loans.Commands;
+using Application.Loans.Queries;
 
 namespace LibraryManagement.Controllers
 {
     public class LoanController : Controller
     {
-        private readonly LibraryContext _context;
+        private readonly IMediator _mediator;
+        private readonly CleanLibraryContext _context;
 
-        public LoanController(LibraryContext context)
+        public LoanController(IMediator mediator, CleanLibraryContext context)
         {
+            _mediator = mediator;
             _context = context;
         }
 
-        [HttpGet]
-    public async Task<IActionResult> Index(string? searchString)
-    {
-        var loans = _context.Loans.Include(l => l.Book).Include(l => l.Borrower).AsQueryable();
-
-        if (!string.IsNullOrEmpty(searchString))
+        public async Task<IActionResult> Index()
         {
-            loans = loans.Where(l => l.Book.Title.ToLower().Contains(searchString) || l.Borrower.Name.ToLower().Contains(searchString));
+            var loans = await _mediator.Send(new GetLoansQuery());
+
+            var viewModels = loans.Select(l => new LoanListViewModel
+            {
+                LoanId = l.LoanId,
+                BookTitle = l.Book.Title.Value,
+                BorrowerName = l.Borrower.Name.Value,
+                LoanDate = l.LoanDate,
+                DueDate = l.DueDate
+            }).ToList();
+
+            return View(viewModels);
         }
 
-        return View(await loans.ToListAsync());
-    }
-
-
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var loan = await _mediator.Send(new GetLoanByIdQuery(id));
+            if (loan == null) return NotFound();
 
-            var loan = await _context.Loans
-                .Include(l => l.Book)
-                .Include(l => l.Borrower)
-                .FirstOrDefaultAsync(m => m.LoanId == id);
-            if (loan == null)
+            var viewModel = new LoanDetailViewModel
             {
-                return NotFound();
-            }
+                LoanId = loan.LoanId,
+                BookTitle = loan.Book.Title.Value,
+                BorrowerName = loan.Borrower.Name.Value,
+                LoanDate = loan.LoanDate,
+                DueDate = loan.DueDate
+            };
 
-            return View(loan);
+            return View(viewModel);
         }
 
         public IActionResult Create()
         {
-            ViewData["BookId"] = new SelectList(_context.Books, "BookId", "Title");
-            ViewData["BorrowerId"] = new SelectList(_context.Borrowers, "BorrowerId", "Name");
-            return View();
+            var viewModel = new LoanCreateViewModel
+            {
+                Books = _context.Books.Select(b => new SelectListItem
+                {
+                    Value = b.BookId.ToString(),
+                    Text = b.Title.Value
+                }),
+                Borrowers = _context.Borrowers.Select(b => new SelectListItem
+                {
+                    Value = b.BorrowerId.ToString(),
+                    Text = b.Name.Value
+                })
+            };
+
+            return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("LoanId,BookId,BorrowerId,LoanDate")] Loan loan)
+        public async Task<IActionResult> Create(LoanCreateViewModel model)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                _context.Add(loan);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
+                model.Books = _context.Books.Select(b => new SelectListItem
+                {
+                    Value = b.BookId.ToString(),
+                    Text = b.Title.Value
+                });
+                model.Borrowers = _context.Borrowers.Select(b => new SelectListItem
+                {
+                    Value = b.BorrowerId.ToString(),
+                    Text = b.Name.Value
+                });
+
+                return View(model);
             }
-            ViewData["BookId"] = new SelectList(_context.Books, "BookId", "BookId", loan.BookId);
-            ViewData["BorrowerId"] = new SelectList(_context.Borrowers, "BorrowerId", "BorrowerId", loan.BorrowerId);
-            return View(loan);
+
+            var command = new CreateLoanCommand(model.BookId, model.BorrowerId, model.LoanDate, model.DueDate);
+            await _mediator.Send(command);
+
+            return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Edit(int? id)
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var loan = await _mediator.Send(new GetLoanByIdQuery(id));
+            if (loan == null) return NotFound();
 
-            var loan = await _context.Loans.FindAsync(id);
-            if (loan == null)
+            var books = _context.Books.Select(b => new SelectListItem
             {
-                return NotFound();
-            }
-            ViewData["BookId"] = new SelectList(_context.Books, "BookId", "BookId", loan.BookId);
-            ViewData["BorrowerId"] = new SelectList(_context.Borrowers, "BorrowerId", "BorrowerId", loan.BorrowerId);
-            return View(loan);
+                Value = b.BookId.ToString(),
+                Text = b.Title.Value
+            });
+
+            var borrowers = _context.Borrowers.Select(b => new SelectListItem
+            {
+                Value = b.BorrowerId.ToString(),
+                Text = b.Name.Value
+            });
+
+            var viewModel = new LoanEditViewModel
+            {
+                LoanId = loan.LoanId,
+                BookId = loan.BookId,
+                BorrowerId = loan.BorrowerId,
+                LoanDate = loan.LoanDate,
+                DueDate = loan.DueDate,
+                Books = books,
+                Borrowers = borrowers
+            };
+
+            return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("LoanId,BookId,BorrowerId,LoanDate")] Loan loan)
+        public async Task<IActionResult> Edit(LoanEditViewModel model)
         {
-            if (id != loan.LoanId)
+            if (!ModelState.IsValid)
             {
-                return NotFound();
+                model.Books = _context.Books.Select(b => new SelectListItem
+                {
+                    Value = b.BookId.ToString(),
+                    Text = b.Title.Value
+                });
+
+                model.Borrowers = _context.Borrowers.Select(b => new SelectListItem
+                {
+                    Value = b.BorrowerId.ToString(),
+                    Text = b.Name.Value
+                });
+
+                return View(model);
             }
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(loan);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!LoanExists(loan.LoanId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["BookId"] = new SelectList(_context.Books, "BookId", "BookId", loan.BookId);
-            ViewData["BorrowerId"] = new SelectList(_context.Borrowers, "BorrowerId", "BorrowerId", loan.BorrowerId);
-            return View(loan);
+            var command = new UpdateLoanCommand(model.LoanId, model.BookId, model.BorrowerId, model.LoanDate, model.DueDate);
+            var result = await _mediator.Send(command);
+            if (!result) return NotFound();
+
+            return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Delete(int? id)
+        public async Task<IActionResult> Delete(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var loan = await _mediator.Send(new GetLoanByIdQuery(id));
+            if (loan == null) return NotFound();
 
-            var loan = await _context.Loans
-                .Include(l => l.Book)
-                .Include(l => l.Borrower)
-                .FirstOrDefaultAsync(m => m.LoanId == id);
-            if (loan == null)
+            var viewModel = new LoanDeleteViewModel
             {
-                return NotFound();
-            }
+                LoanId = loan.LoanId,
+                BookTitle = loan.Book.Title.Value,
+                BorrowerName = loan.Borrower.Name.Value,
+                LoanDate = loan.LoanDate,
+                DueDate = loan.DueDate
+            };
 
-            return View(loan);
+            return View(viewModel);
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var loan = await _context.Loans.FindAsync(id);
-            if (loan != null)
-            {
-                _context.Loans.Remove(loan);
-            }
+            var success = await _mediator.Send(new DeleteLoanCommand(id));
+            if (!success) return NotFound();
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool LoanExists(int id)
-        {
-            return _context.Loans.Any(e => e.LoanId == id);
         }
     }
 }

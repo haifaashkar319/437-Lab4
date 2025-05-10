@@ -1,36 +1,28 @@
-@model LibraryManagementService.Models.Loan
+@model LibraryManagement.ViewModels.LoanDetailViewModel
 
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Loan Details";
 }
 
-<h1>Details</h1>
-
+<h1>Loan Details</h1>
+<hr />
 <div>
-    <h4>Loan</h4>
-    <hr />
     <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LoanDate)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.LoanDate)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Book)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Book.BookId)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Borrower)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Borrower.BorrowerId)
-        </dd>
+        <dt class="col-sm-2">Book</dt>
+        <dd class="col-sm-10">@Model.BookTitle</dd>
+
+        <dt class="col-sm-2">Borrower</dt>
+        <dd class="col-sm-10">@Model.BorrowerName</dd>
+
+        <dt class="col-sm-2">Loan Date</dt>
+        <dd class="col-sm-10">@Model.LoanDate.ToShortDateString()</dd>
+
+        <dt class="col-sm-2">Due Date</dt>
+        <dd class="col-sm-10">@Model.DueDate.ToShortDateString()</dd>
     </dl>
 </div>
+
 <div>
-    <a asp-action="Edit" asp-route-id="@Model?.LoanId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+    <a asp-action="Edit" asp-route-id="@Model.LoanId" class="btn btn-warning">Edit</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
 </div>
