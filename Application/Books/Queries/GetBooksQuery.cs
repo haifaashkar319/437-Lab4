@@ -1,15 +1,12 @@
-using Core.Domain.Entities;
+using Application.Books.DTOs;
 using MediatR;
 using System.Collections.Generic;
 
-namespace Application.Books.Queries;
-
-public class GetBooksQuery : IRequest<IEnumerable<Book>>
+namespace Application.Books.Queries
 {
-    public string? Search { get; set; }
-
-    public GetBooksQuery(string? search = null)
+    public class GetBooksQuery : IRequest<IEnumerable<BookDto>>
     {
-        Search = search;
+        public string? Search { get; set; }
+        public GetBooksQuery(string? search = null) => Search = search;
     }
 }

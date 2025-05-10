@@ -33,9 +33,9 @@ builder.Services
 // Register AutoMapper
 builder.Services.AddAutoMapper(
     typeof(Application.Mapping.AuthorProfile).Assembly,
+    typeof(Application.Mapping.BookProfile).Assembly,
     typeof(WebMappingProfile).Assembly
 );
-builder.Services.AddAutoMapper(typeof(Application.Mapping.AuthorProfile).Assembly);
 
 // MVC + JSON options
 builder.Services.AddControllersWithViews()

@@ -1,14 +1,11 @@
-using Core.Domain.Entities;
+using Application.Books.DTOs;
 using MediatR;
 
-namespace Application.Books.Queries;
-
-public class GetBookByIdQuery : IRequest<Book?>
+namespace Application.Books.Queries
 {
-    public int Id { get; }
-
-    public GetBookByIdQuery(int id)
+    public class GetBookByIdQuery : IRequest<BookDto?>
     {
-        Id = id;
+        public int Id { get; }
+        public GetBookByIdQuery(int id) => Id = id;
     }
 }
