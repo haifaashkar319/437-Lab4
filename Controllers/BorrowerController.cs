@@ -1,155 +1,120 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using LibraryManagementService.Data;
-using LibraryManagementService.Models;
+using MediatR;
+using Application.Borrowers.Queries;
+using Application.Borrowers.Commands;
+using LibraryManagement.ViewModels;
 
 namespace LibraryManagement.Controllers
 {
     public class BorrowerController : Controller
     {
-        private readonly LibraryContext _context;
+        private readonly IMediator _mediator;
 
-        public BorrowerController(LibraryContext context)
+        public BorrowerController(IMediator mediator)
         {
-            _context = context;
+            _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<IActionResult> Index(string? searchString)
         {
-            var borrowers = _context.Borrowers.AsQueryable();
+            var borrowers = await _mediator.Send(new GetBorrowersQuery(searchString));
 
-            if (!string.IsNullOrEmpty(searchString))
+            var viewModels = borrowers.Select(b => new BorrowerListViewModel
             {
-                borrowers = borrowers.Where(b => b.Name.ToLower().Contains(searchString));
-            }
+                BorrowerId = b.BorrowerId,
+                Name = b.Name.Value
+            }).ToList();
 
-            return View(await borrowers.ToListAsync());
+            return View(viewModels);
         }
 
-
-
-        public async Task<IActionResult> Details(int? id)
+        [HttpGet]
+        public async Task<IActionResult> Details(int id)
         {
-            if (id == null) return NotFound();
-
-            var borrower = await _context.Borrowers
-                .Include(b => b.Loans)
-                .ThenInclude(l => l.Book)
-                .FirstOrDefaultAsync(m => m.BorrowerId == id);
-
+            var borrower = await _mediator.Send(new GetBorrowerByIdQuery(id));
             if (borrower == null) return NotFound();
 
-            return View(borrower);
+            var viewModel = new BorrowerDetailViewModel
+            {
+                BorrowerId = borrower.BorrowerId,
+                Name = borrower.Name.Value
+            };
+
+            return View(viewModel);
         }
 
-        // GET: Borrower/Create
+        [HttpGet]
         public IActionResult Create()
         {
-            return View();
+            return View(new BorrowerCreateViewModel());
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("BorrowerId,Name")] Borrower borrower)
+        public async Task<IActionResult> Create(BorrowerCreateViewModel model)
         {
-            if (ModelState.IsValid)
-            {
-                Console.WriteLine($"Adding Borrower: {borrower.Name}"); // ✅ Debug message
+            if (!ModelState.IsValid)
+                return View(model);
 
-                _context.Add(borrower);
-                await _context.SaveChangesAsync();
+            var command = new CreateBorrowerCommand(model.Name);
+            await _mediator.Send(command);
 
-                Console.WriteLine("Borrower added successfully!"); // ✅ Debug message
-                return RedirectToAction(nameof(Index));
-            }
-
-            Console.WriteLine("ModelState is invalid!"); // ✅ Debug message
-            return View(borrower);
+            return RedirectToAction(nameof(Index));
         }
 
-
-        public async Task<IActionResult> Edit(int? id)
+        [HttpGet]
+        public async Task<IActionResult> Edit(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var borrower = await _mediator.Send(new GetBorrowerByIdQuery(id));
+            if (borrower == null) return NotFound();
 
-            var borrower = await _context.Borrowers.FindAsync(id);
-            if (borrower == null)
+            var viewModel = new BorrowerEditViewModel
             {
-                return NotFound();
-            }
-            return View(borrower);
+                BorrowerId = borrower.BorrowerId,
+                Name = borrower.Name.Value
+            };
+
+            return View(viewModel);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("BorrowerId,Name")] Borrower borrower)
+        public async Task<IActionResult> Edit(BorrowerEditViewModel model)
         {
-            if (id != borrower.BorrowerId)
-            {
-                return NotFound();
-            }
+            if (!ModelState.IsValid)
+                return View(model);
 
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(borrower);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!BorrowerExists(borrower.BorrowerId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(borrower);
+            var command = new UpdateBorrowerCommand(model.BorrowerId, model.Name);
+            var result = await _mediator.Send(command);
+            if (!result) return NotFound();
+
+            return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Delete(int? id)
+        [HttpGet]
+        public async Task<IActionResult> Delete(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var borrower = await _mediator.Send(new GetBorrowerByIdQuery(id));
+            if (borrower == null) return NotFound();
 
-            var borrower = await _context.Borrowers
-                .FirstOrDefaultAsync(m => m.BorrowerId == id);
-            if (borrower == null)
+            var viewModel = new BorrowerDeleteViewModel
             {
-                return NotFound();
-            }
+                BorrowerId = borrower.BorrowerId,
+                Name = borrower.Name.Value
+            };
 
-            return View(borrower);
+            return View(viewModel);
         }
 
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var borrower = await _context.Borrowers.FindAsync(id);
-            if (borrower != null)
-            {
-                _context.Borrowers.Remove(borrower);
-            }
+            var success = await _mediator.Send(new DeleteBorrowerCommand(id));
+            if (!success) return NotFound();
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
-        }
-
-        private bool BorrowerExists(int id)
-        {
-            return _context.Borrowers.Any(e => e.BorrowerId == id);
         }
     }
 }
