@@ -12,8 +12,6 @@ using MediatR;
 using Core.Domain.Settings;
 using Infrastructure.Identity;
 using Infrastructure.Persistence;
-using LibraryManagementService.Data;
-using LibraryManagementService.Models;
 using Core.Domain.Interfaces;
 using Infrastructure.Repositories;
 using Infrastructure.Services;
@@ -48,8 +46,7 @@ builder.Services.AddControllersWithViews()
 // 3) EF Core DbContexts
 builder.Services.AddDbContext<CleanLibraryContext>(opts =>
     opts.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddDbContext<LibraryContext>(opts =>
-    opts.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 builder.Services.AddIdentity<Infrastructure.Identity.ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<CleanLibraryContext>()
@@ -113,7 +110,7 @@ using (var scope = app.Services.CreateScope())
 // seed your app‐specific data (if any)
 using (var scope = app.Services.CreateScope())
 {
-    var ctx = scope.ServiceProvider.GetRequiredService<LibraryContext>();
+    var ctx = scope.ServiceProvider.GetRequiredService<CleanLibraryContext>();
     ctx.Database.EnsureCreated();
 }
 

@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using LibraryManagementService.Data;
-using LibraryManagementService.Models;
 using Microsoft.AspNetCore.Authorization;
+using MediatR;
+using Core.Domain.Entities;
+using Application.Borrowers.Commands;
+using Application.Borrowers.Queries;
 
 namespace LibraryManagement.Controllers.Api
 {
@@ -11,67 +12,52 @@ namespace LibraryManagement.Controllers.Api
     [Authorize]
     public class BorrowersController : ControllerBase
     {
-        private readonly LibraryContext _context;
+        private readonly IMediator _mediator;
 
-        public BorrowersController(LibraryContext context)
+        public BorrowersController(IMediator mediator)
         {
-            _context = context;
+            _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Borrower>>> GetBorrowers()
         {
-            return await _context.Borrowers
-                                 .Include(b => b.Loans)
-                                 .ThenInclude(l => l.Book)
-                                 .ToListAsync();
+            var query = new GetBorrowersQuery();
+            var borrowers = await _mediator.Send(query);
+            return Ok(borrowers);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Borrower>> GetBorrower(int id)
         {
-            var borrower = await _context.Borrowers
-                                         .Include(b => b.Loans)
-                                         .ThenInclude(l => l.Book)
-                                         .FirstOrDefaultAsync(b => b.BorrowerId == id);
+            var query = new GetBorrowerByIdQuery(id);
+            var borrower = await _mediator.Send(query);
 
             if (borrower == null)
                 return NotFound();
 
-            return borrower;
+            return Ok(borrower);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Borrower>> PostBorrower(Borrower borrower)
+        public async Task<ActionResult<Borrower>> PostBorrower(CreateBorrowerCommand command)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            _context.Borrowers.Add(borrower);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetBorrower), new { id = borrower.BorrowerId }, borrower);
+            var createdBorrowerId = await _mediator.Send(command);
+            return CreatedAtAction(nameof(GetBorrower), new { id = createdBorrowerId }, null);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutBorrower(int id, Borrower borrower)
+        public async Task<IActionResult> PutBorrower(int id, UpdateBorrowerCommand command)
         {
-            if (id != borrower.BorrowerId)
+            if (id != command.BorrowerId)
                 return BadRequest();
 
-            _context.Entry(borrower).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Borrowers.Any(b => b.BorrowerId == id))
-                    return NotFound();
-                else
-                    throw;
-            }
+            var result = await _mediator.Send(command);
+            if (!result)
+                return NotFound();
 
             return NoContent();
         }
@@ -79,12 +65,11 @@ namespace LibraryManagement.Controllers.Api
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBorrower(int id)
         {
-            var borrower = await _context.Borrowers.FindAsync(id);
-            if (borrower == null)
-                return NotFound();
+            var command = new DeleteBorrowerCommand(id);
+            var result = await _mediator.Send(command);
 
-            _context.Borrowers.Remove(borrower);
-            await _context.SaveChangesAsync();
+            if (!result)
+                return NotFound();
 
             return NoContent();
         }

@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using LibraryManagement.Models;  // ← for ErrorViewModel
+using Application.Common.Models; // Replace with the appropriate namespace for the new ErrorViewModel
 
 namespace LibraryManagement.Controllers
 {

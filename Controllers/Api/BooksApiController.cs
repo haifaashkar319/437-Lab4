@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using LibraryManagementService.Data;
-using LibraryManagementService.Models;
 using Microsoft.AspNetCore.Authorization;
+using MediatR;
+using Core.Domain.Entities;
+using Application.Books.Commands;
+using Application.Books.Queries;
 
 namespace LibraryManagement.Controllers.Api
 {
@@ -11,104 +12,52 @@ namespace LibraryManagement.Controllers.Api
     [Authorize]
     public class BooksController : ControllerBase
     {
-        private readonly LibraryContext _context;
+        private readonly IMediator _mediator;
 
-        public BooksController(LibraryContext context)
+        public BooksController(IMediator mediator)
         {
-            _context = context;
+            _mediator = mediator;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Book>>> GetBooks(
-            int page = 1,
-            int pageSize = 10,
-            string? search = null)
+        public async Task<ActionResult> GetBooks(int page = 1, int pageSize = 10, string? search = null)
         {
-            var query = _context.Books
-                .Include(b => b.Author)
-                .AsQueryable();
-
-            if (!string.IsNullOrEmpty(search))
-            {
-                string lowered = search.ToLower();
-                query = query.Where(b =>
-                    b.Title.ToLower().Contains(lowered) ||
-                    b.Genre.ToLower().Contains(lowered) ||
-                    (b.Author != null && b.Author.Name.ToLower().Contains(lowered)));
-            }
-
-            var totalCount = await query.CountAsync();
-            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-
-            var books = await query
-            .Include(b => b.Author)
-            .Select(b => new {
-                b.BookId,
-                b.Title,
-                b.Genre,
-                b.AuthorId,
-                Author = new {
-                    b.Author.AuthorId,
-                    b.Author.Name
-                }
-            })
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToListAsync();
-            return Ok(new
-            {
-                currentPage = page,
-                pageSize,
-                totalCount,
-                totalPages,
-                results = books
-            });
+            var query = new GetBooksQuery(search); 
+            var result = await _mediator.Send(query);
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Book>> GetBook(int id)
         {
-            var book = await _context.Books
-                .Include(b => b.Author)
-                .FirstOrDefaultAsync(b => b.BookId == id);
+            var query = new GetBookByIdQuery(id);
+            var book = await _mediator.Send(query);
 
             if (book == null)
                 return NotFound();
 
-            return book;
+            return Ok(book);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Book>> PostBook(Book book)
+        public async Task<ActionResult<Book>> PostBook(CreateBookCommand command)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            _context.Books.Add(book);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetBook), new { id = book.BookId }, book);
+            var createdBookId = await _mediator.Send(command);
+            return CreatedAtAction(nameof(GetBook), new { id = createdBookId }, null);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutBook(int id, Book book)
+        public async Task<IActionResult> PutBook(int id, UpdateBookCommand command)
         {
-            if (id != book.BookId)
+            if (id != command.BookId)
                 return BadRequest();
 
-            _context.Entry(book).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Books.Any(b => b.BookId == id))
-                    return NotFound();
-                else
-                    throw;
-            }
+            var result = await _mediator.Send(command);
+            if (!result)
+                return NotFound();
 
             return NoContent();
         }
@@ -116,12 +65,12 @@ namespace LibraryManagement.Controllers.Api
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteBook(int id)
         {
-            var book = await _context.Books.FindAsync(id);
-            if (book == null)
+            var command = new DeleteBookCommand(id);
+            var result = await _mediator.Send(command);
+
+            if (!result)
                 return NotFound();
 
-            _context.Books.Remove(book);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
     }

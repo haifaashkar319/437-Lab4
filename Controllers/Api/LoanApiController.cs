@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using LibraryManagementService.Data;
-using LibraryManagementService.Models;
 using Microsoft.AspNetCore.Authorization;
+using MediatR;
+using Core.Domain.Entities;
+using Application.Loans.Commands;
+using Application.Loans.Queries;
 
 namespace LibraryManagement.Controllers.Api
 {
@@ -11,67 +12,52 @@ namespace LibraryManagement.Controllers.Api
     [Authorize]
     public class LoansController : ControllerBase
     {
-        private readonly LibraryContext _context;
+        private readonly IMediator _mediator;
 
-        public LoansController(LibraryContext context)
+        public LoansController(IMediator mediator)
         {
-            _context = context;
+            _mediator = mediator;
         }
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Loan>>> GetLoans()
         {
-            return await _context.Loans
-                .Include(l => l.Book)
-                .Include(l => l.Borrower)
-                .ToListAsync();
+            var query = new GetLoansQuery();
+            var loans = await _mediator.Send(query);
+            return Ok(loans);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<Loan>> GetLoan(int id)
         {
-            var loan = await _context.Loans
-                .Include(l => l.Book)
-                .Include(l => l.Borrower)
-                .FirstOrDefaultAsync(l => l.LoanId == id);
+            var query = new GetLoanByIdQuery(id);
+            var loan = await _mediator.Send(query);
 
             if (loan == null)
                 return NotFound();
 
-            return loan;
+            return Ok(loan);
         }
 
         [HttpPost]
-        public async Task<ActionResult<Loan>> PostLoan(Loan loan)
+        public async Task<ActionResult<Loan>> PostLoan(CreateLoanCommand command)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            _context.Loans.Add(loan);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetLoan), new { id = loan.LoanId }, loan);
+            var createdLoanId = await _mediator.Send(command);
+            return CreatedAtAction(nameof(GetLoan), new { id = createdLoanId }, null);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutLoan(int id, Loan loan)
+        public async Task<IActionResult> PutLoan(int id, UpdateLoanCommand command)
         {
-            if (id != loan.LoanId)
+            if (id != command.LoanId)
                 return BadRequest();
 
-            _context.Entry(loan).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!_context.Loans.Any(l => l.LoanId == id))
-                    return NotFound();
-                else
-                    throw;
-            }
+            var result = await _mediator.Send(command);
+            if (!result)
+                return NotFound();
 
             return NoContent();
         }
@@ -79,12 +65,12 @@ namespace LibraryManagement.Controllers.Api
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteLoan(int id)
         {
-            var loan = await _context.Loans.FindAsync(id);
-            if (loan == null)
+            var command = new DeleteLoanCommand(id);
+            var result = await _mediator.Send(command);
+
+            if (!result)
                 return NotFound();
 
-            _context.Loans.Remove(loan);
-            await _context.SaveChangesAsync();
             return NoContent();
         }
     }

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using LibraryManagementService.DTOs;
 using Infrastructure.Services;
-using Infrastructure.Identity;      // ← use this ApplicationUser
+using Infrastructure.Identity;      
 
 namespace LibraryManagement.Controllers
 {

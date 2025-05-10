@@ -1,115 +1,92 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using LibraryManagementService.Data;
-using LibraryManagementService.Models;
 using Microsoft.AspNetCore.Authorization;
+using MediatR;
+using Core.Domain.Entities;
+using Application.Authors.Commands;
+using Application.Authors.Queries;
+
 namespace LibraryManagement.Controllers.Api
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] 
-
+    [Authorize]
     public class AuthorsController : ControllerBase
     {
-        private readonly LibraryContext _context;
+        private readonly IMediator _mediator;
 
-        public AuthorsController(LibraryContext context)
+        public AuthorsController(IMediator mediator)
         {
-            _context = context;
+            _mediator = mediator;
         }
 
         // GET: api/Authors
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Author>>> GetAuthors()
         {
-            return await _context.Authors.Include(a => a.Books).ToListAsync();
+            var query = new GetAuthorsQuery();
+            var authors = await _mediator.Send(query);
+            return Ok(authors);
         }
 
         // GET: api/Authors/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Author>> GetAuthor(int id)
         {
-            var author = await _context.Authors
-                .Include(a => a.Books)
-                .FirstOrDefaultAsync(a => a.AuthorId == id);
+            var query = new GetAuthorByIdQuery(id); // Use constructor instead of object initializer
+            var author = await _mediator.Send(query);
 
             if (author == null)
             {
                 return NotFound();
             }
 
-            return author;
-        }
-
-        // PUT: api/Authors/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutAuthor(int id, Author author)
-        {
-            if (id != author.AuthorId)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(author).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!AuthorExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return Ok(author);
         }
 
         // POST: api/Authors
         [HttpPost]
-        public async Task<ActionResult<Author>> PostAuthor(Author author)
+        public async Task<ActionResult<Author>> PostAuthor(CreateAuthorCommand command)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (_context.Authors.Any(a => a.Name.ToLower() == author.Name.ToLower()))
+            var createdAuthorId = await _mediator.Send(command); // Assuming the handler returns the ID of the created author
+            return CreatedAtAction(nameof(GetAuthor), new { id = createdAuthorId }, null); // Pass the ID and null for the body
+        }
+
+        // PUT: api/Authors/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutAuthor(int id, UpdateAuthorCommand command)
+        {
+            if (id != command.AuthorId)
             {
-                return Conflict("An author with this name already exists.");
+                return BadRequest();
             }
 
-            _context.Authors.Add(author);
-            await _context.SaveChangesAsync();
+            var result = await _mediator.Send(command);
+            if (!result)
+            {
+                return NotFound();
+            }
 
-            return CreatedAtAction(nameof(GetAuthor), new { id = author.AuthorId }, author);
+            return NoContent();
         }
 
         // DELETE: api/Authors/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteAuthor(int id)
         {
-            var author = await _context.Authors.FindAsync(id);
-            if (author == null)
+            var command = new DeleteAuthorCommand(id); // Use constructor instead of object initializer
+            var result = await _mediator.Send(command);
+
+            if (!result)
             {
                 return NotFound();
             }
 
-            _context.Authors.Remove(author);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        private bool AuthorExists(int id)
-        {
-            return _context.Authors.Any(e => e.AuthorId == id);
         }
     }
 }

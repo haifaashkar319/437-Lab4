@@ -8,11 +8,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace LibraryManagement.Migrations.CleanLibrary
+namespace LibraryManagement.Migrations
 {
     [DbContext(typeof(CleanLibraryContext))]
-    [Migration("20250510120606_AddDueDateToLoan")]
-    partial class AddDueDateToLoan
+    [Migration("20250510192746_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

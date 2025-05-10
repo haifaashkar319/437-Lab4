@@ -1,12 +1,13 @@
 using FluentValidation;
-using LibraryManagementService.Models;
+using Application.Loans.Commands; // Replace with the correct namespace for CreateLoanCommand
 
-public class LoanValidator : AbstractValidator<Loan>
+public class LoanValidator : AbstractValidator<CreateLoanCommand>
 {
     public LoanValidator()
     {
         RuleFor(l => l.BookId)
-        .GreaterThan(0).WithMessage("A book must be selected.");
+            .GreaterThan(0).WithMessage("A book must be selected.");
+
         RuleFor(l => l.BorrowerId)
             .GreaterThan(0).WithMessage("A borrower must be selected.");
 
